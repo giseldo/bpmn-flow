@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react"
+import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from "react"
 
 interface BpmnModelerProps {
   xml?: string
@@ -11,13 +11,54 @@ interface BpmnModelerProps {
 const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, onModelChange }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const modelerRef = useRef<any>(null)
+  const [isReady, setIsReady] = useState(false)
 
-  useImperativeHandle(ref, () => modelerRef.current)
+  useImperativeHandle(ref, () => ({
+    importXML: async (xmlString: string) => {
+      console.log("🔄 BpmnModeler: Tentando importar XML...")
+      if (modelerRef.current && isReady) {
+        try {
+          console.log("📄 XML a ser importado:", xmlString.substring(0, 200) + "...")
+          const result = await modelerRef.current.importXML(xmlString)
+          console.log("✅ BpmnModeler: XML importado com sucesso!", result)
+
+          // Forçar re-render do canvas
+          const canvas = modelerRef.current.get("canvas")
+          if (canvas) {
+            canvas.zoom("fit-viewport")
+          }
+
+          return true
+        } catch (error) {
+          console.error("❌ BpmnModeler: Erro ao importar XML:", error)
+          return false
+        }
+      } else {
+        console.warn("⚠️ BpmnModeler: Modeler não está pronto ainda")
+        return false
+      }
+    },
+    saveXML: async (options?: any) => {
+      if (modelerRef.current && isReady) {
+        return await modelerRef.current.saveXML(options)
+      }
+      return null
+    },
+    get: (service: string) => {
+      if (modelerRef.current && isReady) {
+        return modelerRef.current.get(service)
+      }
+      return null
+    },
+    isReady: () => isReady,
+  }))
 
   useEffect(() => {
     const initModeler = async () => {
       if (typeof window !== "undefined" && containerRef.current) {
         try {
+          console.log("🚀 BpmnModeler: Inicializando modeler...")
+
           // Load bpmn-js from CDN
           if (!(window as any).BpmnJS) {
             await loadBpmnJS()
@@ -30,30 +71,17 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
             keyboard: {
               bindTo: window,
             },
-            // Enable all default modules including palette
             additionalModules: [],
           })
 
           modelerRef.current = modeler
+          console.log("🎯 BpmnModeler: Modeler criado")
 
-          // Load initial diagram or create new one
-          const initialXml =
-            xml ||
-            `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="17.0.0">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-      </bpmndi:BPMNShape>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
+          // Load initial diagram
+          const initialXml = xml || getDefaultBpmnXml()
 
           await modeler.importXML(initialXml)
+          console.log("✅ BpmnModeler: XML inicial carregado")
 
           // Set up event listeners
           const eventBus = modeler.get("eventBus")
@@ -81,8 +109,11 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
           if (palette) {
             palette.open()
           }
+
+          setIsReady(true)
+          console.log("🎉 BpmnModeler: Modeler pronto!")
         } catch (error) {
-          console.error("Error initializing BPMN modeler:", error)
+          console.error("❌ BpmnModeler: Erro ao inicializar:", error)
         }
       }
     }
@@ -92,20 +123,50 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
     return () => {
       if (modelerRef.current) {
         modelerRef.current.destroy()
+        setIsReady(false)
       }
     }
   }, [])
 
+  // Watch for XML changes from props with delay
   useEffect(() => {
-    if (modelerRef.current && xml) {
-      modelerRef.current.importXML(xml).catch((error: any) => {
-        console.error("Error importing XML:", error)
-      })
-    }
-  }, [xml])
+    if (!xml || !isReady) return
+
+    console.log("🔍 BpmnModeler: XML prop mudou, aguardando para importar...")
+
+    // Delay para garantir que o modeler está completamente pronto
+    const timer = setTimeout(() => {
+      if (modelerRef.current && isReady) {
+        console.log("⏰ BpmnModeler: Importando XML após delay...")
+        modelerRef.current.importXML(xml).catch((error: any) => {
+          console.error("❌ BpmnModeler: Erro ao importar XML do prop:", error)
+        })
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [xml, isReady])
+
+  const getDefaultBpmnXml = () => {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="17.0.0">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="79" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`
+  }
 
   const loadBpmnJS = (): Promise<void> => {
     return new Promise((resolve, reject) => {
+      console.log("📦 BpmnModeler: Carregando bpmn-js...")
+
       // Load CSS first
       const cssLink = document.createElement("link")
       cssLink.rel = "stylesheet"
@@ -127,8 +188,14 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
       // Load JS
       const script = document.createElement("script")
       script.src = "https://unpkg.com/bpmn-js@17.0.0/dist/bpmn-modeler.development.js"
-      script.onload = () => resolve()
-      script.onerror = () => reject(new Error("Failed to load bpmn-js"))
+      script.onload = () => {
+        console.log("✅ BpmnModeler: bpmn-js carregado")
+        resolve()
+      }
+      script.onerror = () => {
+        console.error("❌ BpmnModeler: Falha ao carregar bpmn-js")
+        reject(new Error("Failed to load bpmn-js"))
+      }
       document.head.appendChild(script)
     })
   }
@@ -149,6 +216,7 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
             }}
           />
           <span className="text-sm font-medium text-gray-600">BPMN Editor</span>
+          {isReady && <span className="text-xs text-green-600">● Ready</span>}
         </div>
         <div className="text-xs text-gray-500">Powered by bpmn.io</div>
       </div>

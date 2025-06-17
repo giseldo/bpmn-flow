@@ -13,10 +13,11 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "../contexts/auth-context"
 import { useProcess, type ProcessDefinition } from "../contexts/process-context"
-import { Save, ArrowLeft, Download, Upload, Workflow, ExternalLink, Info } from "lucide-react"
+import { Save, ArrowLeft, Download, Upload, Workflow, ExternalLink, Info, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import FormEditor from "../components/form-editor"
 import BpmnModeler from "../components/bpmn-modeler"
+import BpmnChat from "../components/bpmn-chat"
 
 export default function ProcessEditor() {
   const searchParams = useSearchParams()
@@ -30,6 +31,7 @@ export default function ProcessEditor() {
   const [forms, setForms] = useState<Record<string, any[]>>({})
   const [bpmnXml, setBpmnXml] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
+  const [updateCounter, setUpdateCounter] = useState(0)
   const bpmnModelerRef = useRef<any>(null)
 
   // Load existing process if editing
@@ -41,6 +43,7 @@ export default function ProcessEditor() {
         setProcessDescription(existingProcess.description)
         setForms(existingProcess.forms || {})
         if (existingProcess.bpmnXml) {
+          console.log("📂 ProcessEditor: Carregando XML existente")
           setBpmnXml(existingProcess.bpmnXml)
         }
       }
@@ -53,7 +56,36 @@ export default function ProcessEditor() {
   }
 
   const handleBpmnChange = (xml: string) => {
+    console.log("🔄 ProcessEditor: BPMN changed")
     setBpmnXml(xml)
+  }
+
+  const handleBpmnUpdate = (xml: string) => {
+    console.log("🤖 ProcessEditor: Recebendo XML do chat")
+    console.log("📄 ProcessEditor: XML recebido:", xml.substring(0, 200) + "...")
+
+    // Atualizar o estado
+    setBpmnXml(xml)
+    setUpdateCounter((prev) => prev + 1)
+
+    // Aguardar um pouco e então forçar atualização do modeler
+    setTimeout(() => {
+      if (bpmnModelerRef.current) {
+        console.log("🔄 ProcessEditor: Tentando atualizar modeler...")
+        console.log("🔍 ProcessEditor: Modeler ready?", bpmnModelerRef.current.isReady?.())
+
+        bpmnModelerRef.current
+          .importXML(xml)
+          .then((result: any) => {
+            console.log("✅ ProcessEditor: Modeler atualizado com sucesso!", result)
+          })
+          .catch((error: any) => {
+            console.error("❌ ProcessEditor: Erro ao atualizar modeler:", error)
+          })
+      } else {
+        console.warn("⚠️ ProcessEditor: Modeler ref não disponível")
+      }
+    }, 200)
   }
 
   const saveProcess = async () => {
@@ -123,10 +155,9 @@ export default function ProcessEditor() {
       const reader = new FileReader()
       reader.onload = (e) => {
         const xml = e.target?.result as string
+        console.log("📁 ProcessEditor: Importando arquivo BPMN")
         setBpmnXml(xml)
-        if (bpmnModelerRef.current) {
-          bpmnModelerRef.current.importXML(xml)
-        }
+        setUpdateCounter((prev) => prev + 1)
       }
       reader.readAsText(file)
     }
@@ -164,6 +195,10 @@ export default function ProcessEditor() {
                     <ExternalLink className="h-3 w-3 mr-1" />
                     bpmn.io
                   </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    Chat IA
+                  </Badge>
                 </p>
               </div>
             </div>
@@ -196,8 +231,8 @@ export default function ProcessEditor() {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                <strong>Paleta de Ferramentas:</strong> Use a paleta à esquerda do canvas para adicionar elementos BPMN
-                (eventos, tarefas, gateways, etc.)
+                <strong>💬 Chat IA:</strong> Use o chat no canto inferior direito para criar e modificar diagramas
+                através de conversação natural!
               </AlertDescription>
             </Alert>
 
@@ -267,6 +302,20 @@ export default function ProcessEditor() {
               </Card>
             )}
 
+            {/* Debug Info Melhorado */}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-sm text-blue-800">🔍 Status do Sistema</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-blue-700 space-y-1">
+                <p>XML State: {bpmnXml ? "✅ Loaded" : "❌ Empty"}</p>
+                <p>Modeler Ref: {bpmnModelerRef.current ? "✅ Ready" : "❌ Not Ready"}</p>
+                <p>XML Length: {bpmnXml?.length || 0} chars</p>
+                <p>Update Counter: {updateCounter}</p>
+                <p>Modeler Ready: {bpmnModelerRef.current?.isReady?.() ? "✅ Yes" : "❌ No"}</p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -284,6 +333,9 @@ export default function ProcessEditor() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-2">
+                <p>
+                  • <strong>Chat IA:</strong> Use o chat para criar diagramas conversando
+                </p>
                 <p>
                   • <strong>Paleta:</strong> Use a barra lateral esquerda do canvas
                 </p>
@@ -307,34 +359,12 @@ export default function ProcessEditor() {
                 </p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Elementos BPMN Disponíveis</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground space-y-1">
-                <p>
-                  🟢 <strong>Eventos:</strong> Start, End, Intermediate
-                </p>
-                <p>
-                  🟡 <strong>Tarefas:</strong> User Task, Service Task, Script Task
-                </p>
-                <p>
-                  🔶 <strong>Gateways:</strong> Exclusive, Parallel, Inclusive
-                </p>
-                <p>
-                  📋 <strong>Subprocessos:</strong> Embedded, Call Activity
-                </p>
-                <p>
-                  🏊 <strong>Pools/Lanes:</strong> Para colaboração
-                </p>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
         <div className="flex-1">
           <BpmnModeler
+            key={updateCounter} // Force re-render when XML changes
             ref={bpmnModelerRef}
             xml={bpmnXml}
             onElementSelect={handleElementSelect}
@@ -342,6 +372,9 @@ export default function ProcessEditor() {
           />
         </div>
       </div>
+
+      {/* Chat IA BPMN */}
+      <BpmnChat currentBpmnXml={bpmnXml} onBpmnUpdate={handleBpmnUpdate} />
     </div>
   )
 }
