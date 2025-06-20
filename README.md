@@ -41,19 +41,19 @@ O Chat IA permite criar e modificar diagramas BPMN através de conversação nat
 #### 💬 Exemplos de Uso
 
 **Criar novos processos:**
-```
+\`\`\`
 "Crie um processo de aprovação de férias"
 "Faça um fluxo de compras"
 "Processo de onboarding de funcionários"
-```
+\`\`\`
 
 **Modificar diagramas existentes:**
-```
+\`\`\`
 "Adicione uma tarefa de validação"
 "Modifique o gateway para ser exclusivo"
 "Remova a tarefa de revisão"
 "Simplifique o fluxo"
-```
+\`\`\`
 
 #### 🎨 Interface do Chat
 - **Botão "Aplicar"**: Aplica mudanças individuais
@@ -73,12 +73,12 @@ Consulte [docs/CHAT_USAGE.md](./docs/CHAT_USAGE.md) para um guia detalhado de us
 4. AI generates BPMN diagram automatically
 
 ### Example Prompts
-```
+\`\`\`
 "Crie um processo de aprovação de compras"
 "Adicione um gateway de decisão"
 "Modifique o fluxo para incluir validação"
 "Crie um processo de onboarding de funcionários"
-```
+\`\`\`
 
 ### Manual Editing
 1. Use the bpmn.io palette (left sidebar)
@@ -90,10 +90,10 @@ Consulte [docs/CHAT_USAGE.md](./docs/CHAT_USAGE.md) para um guia detalhado de us
 
 ### Environment Variables
 Create `.env.local` for AI features:
-```bash
+\`\`\`bash
 DEEPSEEK_API_KEY=your_deepseek_api_key_here
 DEEPSEEK_MODEL=deepseek-chat
-```
+\`\`\`
 
 ### Available Models
 - `deepseek-chat` (default)
@@ -134,7 +134,7 @@ Continue building your app on:
 - DeepSeek API key
 
 ### Installation
-```bash
+\`\`\`bash
 # Clone the repository
 git clone <repository-url>
 cd bpmn-flow
@@ -148,7 +148,7 @@ cp .env.example .env.local
 
 # Start development server
 pnpm dev
-```
+\`\`\`
 
 ### API Key Setup
 1. Visit [platform.deepseek.com](https://platform.deepseek.com)
@@ -158,7 +158,7 @@ pnpm dev
 
 ## 🏗️ Project Structure
 
-```
+\`\`\`
 bpmn-flow/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
@@ -171,7 +171,7 @@ bpmn-flow/
 ├── components/            # Shared UI components
 ├── lib/                   # Utilities
 └── public/               # Static assets
-```
+\`\`\`
 
 ## 🤝 Contributing
 

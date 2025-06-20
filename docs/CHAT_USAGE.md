@@ -25,29 +25,29 @@ O Chat IA permite criar e modificar diagramas BPMN através de conversação nat
 ## 💬 Exemplos de Comandos
 
 ### Comandos de Criação
-```
+\`\`\`
 "Crie um processo simples de login"
 "Faça um fluxo de aprovação de documentos"
 "Processo de atendimento ao cliente"
 "Fluxo de reembolso de despesas"
-```
+\`\`\`
 
 ### Comandos de Modificação
-```
+\`\`\`
 "Adicione uma tarefa de validação após o login"
 "Modifique o gateway para ter 3 caminhos"
 "Adicione um evento de timeout"
 "Remova a tarefa de notificação"
 "Simplifique o processo removendo etapas desnecessárias"
-```
+\`\`\`
 
 ### Comandos Específicos
-```
+\`\`\`
 "Adicione um gateway exclusivo"
 "Conecte a tarefa de validação ao evento final"
 "Mude o nome da tarefa para 'Aprovação Gerencial'"
 "Adicione uma subprocesso para validação"
-```
+\`\`\`
 
 ## 🎯 Como Aplicar Mudanças
 
@@ -121,12 +121,12 @@ O Chat IA permite criar e modificar diagramas BPMN através de conversação nat
 4. **Mantenha contexto:** O chat lembra do diagrama atual
 
 ### Comandos Avançados
-```
+\`\`\`
 "Crie um processo com subprocesso de validação"
 "Adicione um gateway paralelo com 3 caminhos"
 "Modifique o processo para incluir loop de aprovação"
 "Adicione eventos de timer e mensagem"
-```
+\`\`\`
 
 ## 🔄 Fluxo de Trabalho Recomendado
 
@@ -142,4 +142,4 @@ Se você encontrar problemas:
 1. Verifique os logs no console do navegador
 2. Teste com comandos simples primeiro
 3. Verifique a configuração da API Key
-4. Consulte a documentação do bpmn.io para referência 
+4. Consulte a documentação do bpmn.io para referência

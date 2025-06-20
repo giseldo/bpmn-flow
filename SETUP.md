@@ -16,21 +16,21 @@ Esta aplicação usa a API do DeepSeek para geração inteligente de diagramas B
 
 Crie um arquivo `.env.local` na raiz do projeto:
 
-```bash
+\`\`\`bash
 # DeepSeek API Configuration
 DEEPSEEK_API_KEY=sua_chave_api_aqui
 
 # Model Configuration (opcional)
 DEEPSEEK_MODEL=deepseek-chat
-```
+\`\`\`
 
 ### 3. Reiniciar a Aplicação
 
-```bash
+\`\`\`bash
 npm run dev
 # ou
 pnpm dev
-```
+\`\`\`
 
 ## 🎯 Modelos Disponíveis
 
@@ -47,15 +47,15 @@ A aplicação mostrará automaticamente:
 ## 🛠️ Solução de Problemas
 
 ### Erro de API Key
-```
+\`\`\`
 ❌ API Chat: API Key do DeepSeek não configurada
-```
+\`\`\`
 **Solução**: Verifique se a `DEEPSEEK_API_KEY` está correta no `.env.local`
 
 ### Erro de Conexão
-```
+\`\`\`
 ❌ API Chat: Erro no DeepSeek: Network error
-```
+\`\`\`
 **Solução**: Verifique sua conexão com a internet
 
 ## 🔒 Segurança
@@ -73,4 +73,4 @@ A aplicação mostrará automaticamente:
 
 ## 🎉 Pronto!
 
-Após configurar a API key do DeepSeek, você terá acesso ao poder da IA para criar diagramas BPMN inteligentes e personalizados! 
+Após configurar a API key do DeepSeek, você terá acesso ao poder da IA para criar diagramas BPMN inteligentes e personalizados!

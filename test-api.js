@@ -58,4 +58,4 @@ const testApi = async () => {
 }
 
 // Executar o teste
-testApi() 
+testApi()
