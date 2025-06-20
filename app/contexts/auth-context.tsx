@@ -11,12 +11,14 @@ interface AuthContextType {
   user: User | null
   login: (email: string, type: "modeler" | "executor") => void
   logout: () => void
+  hydrated: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (savedUser) {
         setUser(JSON.parse(savedUser))
       }
+      setHydrated(true)
     }
   }, [])
 
@@ -42,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, login, logout, hydrated }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

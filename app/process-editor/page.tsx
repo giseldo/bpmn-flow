@@ -31,7 +31,6 @@ export default function ProcessEditor() {
   const [forms, setForms] = useState<Record<string, any[]>>({})
   const [bpmnXml, setBpmnXml] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
-  const [updateCounter, setUpdateCounter] = useState(0)
   const bpmnModelerRef = useRef<any>(null)
 
   // Load existing process if editing
@@ -56,36 +55,13 @@ export default function ProcessEditor() {
   }
 
   const handleBpmnChange = (xml: string) => {
-    console.log("🔄 ProcessEditor: BPMN changed")
-    setBpmnXml(xml)
+    if (xml !== bpmnXml) {
+      setBpmnXml(xml)
+    }
   }
 
   const handleBpmnUpdate = (xml: string) => {
-    console.log("🤖 ProcessEditor: Recebendo XML do chat")
-    console.log("📄 ProcessEditor: XML recebido:", xml.substring(0, 200) + "...")
-
-    // Atualizar o estado
     setBpmnXml(xml)
-    setUpdateCounter((prev) => prev + 1)
-
-    // Aguardar um pouco e então forçar atualização do modeler
-    setTimeout(() => {
-      if (bpmnModelerRef.current) {
-        console.log("🔄 ProcessEditor: Tentando atualizar modeler...")
-        console.log("🔍 ProcessEditor: Modeler ready?", bpmnModelerRef.current.isReady?.())
-
-        bpmnModelerRef.current
-          .importXML(xml)
-          .then((result: any) => {
-            console.log("✅ ProcessEditor: Modeler atualizado com sucesso!", result)
-          })
-          .catch((error: any) => {
-            console.error("❌ ProcessEditor: Erro ao atualizar modeler:", error)
-          })
-      } else {
-        console.warn("⚠️ ProcessEditor: Modeler ref não disponível")
-      }
-    }, 200)
   }
 
   const saveProcess = async () => {
@@ -157,7 +133,6 @@ export default function ProcessEditor() {
         const xml = e.target?.result as string
         console.log("📁 ProcessEditor: Importando arquivo BPMN")
         setBpmnXml(xml)
-        setUpdateCounter((prev) => prev + 1)
       }
       reader.readAsText(file)
     }
@@ -311,7 +286,6 @@ export default function ProcessEditor() {
                 <p>XML State: {bpmnXml ? "✅ Loaded" : "❌ Empty"}</p>
                 <p>Modeler Ref: {bpmnModelerRef.current ? "✅ Ready" : "❌ Not Ready"}</p>
                 <p>XML Length: {bpmnXml?.length || 0} chars</p>
-                <p>Update Counter: {updateCounter}</p>
                 <p>Modeler Ready: {bpmnModelerRef.current?.isReady?.() ? "✅ Yes" : "❌ No"}</p>
               </CardContent>
             </Card>
@@ -364,7 +338,6 @@ export default function ProcessEditor() {
 
         <div className="flex-1">
           <BpmnModeler
-            key={updateCounter} // Force re-render when XML changes
             ref={bpmnModelerRef}
             xml={bpmnXml}
             onElementSelect={handleElementSelect}

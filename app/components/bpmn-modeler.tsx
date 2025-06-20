@@ -16,25 +16,52 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
   useImperativeHandle(ref, () => ({
     importXML: async (xmlString: string) => {
       console.log("🔄 BpmnModeler: Tentando importar XML...")
+      console.log("📄 BpmnModeler: XML recebido para importação:", xmlString.substring(0, 300) + "...")
+      console.log("📏 BpmnModeler: Tamanho do XML:", xmlString.length)
+      
       if (modelerRef.current && isReady) {
         try {
-          console.log("📄 XML a ser importado:", xmlString.substring(0, 200) + "...")
+          console.log("✅ BpmnModeler: Modeler está pronto, importando...")
           const result = await modelerRef.current.importXML(xmlString)
           console.log("✅ BpmnModeler: XML importado com sucesso!", result)
+          console.log("🔍 BpmnModeler: Resultado da importação:", {
+            warnings: result.warnings?.length || 0,
+            hasWarnings: !!result.warnings?.length,
+            warningsDetails: result.warnings || []
+          })
 
           // Forçar re-render do canvas
           const canvas = modelerRef.current.get("canvas")
           if (canvas) {
+            console.log("🎨 BpmnModeler: Ajustando canvas...")
             canvas.zoom("fit-viewport")
+            // Forçar redraw
+            setTimeout(() => {
+              console.log("🔄 BpmnModeler: Forçando redraw do canvas...")
+              canvas.zoom("fit-viewport")
+            }, 100)
+          } else {
+            console.warn("⚠️ BpmnModeler: Canvas não encontrado")
           }
 
           return true
         } catch (error) {
           console.error("❌ BpmnModeler: Erro ao importar XML:", error)
+          console.error("🔍 BpmnModeler: Detalhes do erro:", {
+            errorMessage: error instanceof Error ? error.message : 'Erro desconhecido',
+            errorStack: error instanceof Error ? error.stack : undefined,
+            xmlLength: xmlString.length,
+            xmlStart: xmlString.substring(0, 100)
+          })
           return false
         }
       } else {
         console.warn("⚠️ BpmnModeler: Modeler não está pronto ainda")
+        console.log("🔍 BpmnModeler: Status do modeler:", {
+          hasModelerRef: !!modelerRef.current,
+          isReady: isReady,
+          hasContainer: !!containerRef.current
+        })
         return false
       }
     },
@@ -135,14 +162,41 @@ const BpmnModeler = forwardRef<any, BpmnModelerProps>(({ xml, onElementSelect, o
     console.log("🔍 BpmnModeler: XML prop mudou, aguardando para importar...")
 
     // Delay para garantir que o modeler está completamente pronto
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (modelerRef.current && isReady) {
-        console.log("⏰ BpmnModeler: Importando XML após delay...")
-        modelerRef.current.importXML(xml).catch((error: any) => {
+        try {
+          console.log("⏰ BpmnModeler: Importando XML após delay...")
+          const result = await modelerRef.current.importXML(xml)
+          console.log("✅ BpmnModeler: XML importado com sucesso do prop!", result)
+          
+          // Forçar re-render do canvas
+          const canvas = modelerRef.current.get("canvas")
+          if (canvas) {
+            canvas.zoom("fit-viewport")
+            // Adicionar feedback visual temporário
+            const container = containerRef.current
+            if (container) {
+              container.style.border = "2px solid #10b981"
+              setTimeout(() => {
+                container.style.border = ""
+              }, 1000)
+            }
+          }
+        } catch (error) {
           console.error("❌ BpmnModeler: Erro ao importar XML do prop:", error)
-        })
+          // Feedback visual de erro
+          const container = containerRef.current
+          if (container) {
+            container.style.border = "2px solid #ef4444"
+            setTimeout(() => {
+              container.style.border = ""
+            }, 2000)
+          }
+        }
+      } else {
+        console.warn("⚠️ BpmnModeler: Modeler não está pronto para importar XML")
       }
-    }, 100)
+    }, 200) // Aumentar delay para garantir estabilidade
 
     return () => clearTimeout(timer)
   }, [xml, isReady])

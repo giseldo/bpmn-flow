@@ -24,448 +24,181 @@ export async function POST(req: Request) {
       )
     }
 
-    // Pegar a última mensagem do usuário
-    const lastMessage = messages[messages.length - 1]
-    const userInput = lastMessage?.content?.toLowerCase() || ""
+    // Log da estrutura das mensagens para debug
+    console.log("🔍 API Chat: Estrutura das mensagens recebidas:", messages.map(msg => ({
+      role: msg.role,
+      hasContent: !!msg.content,
+      contentLength: msg.content?.length || 0
+    })))
 
-    console.log("🤖 API Chat: Processando entrada do usuário:", userInput.substring(0, 100))
-
-    // Sistema de resposta baseado em templates
-    let response = ""
-    let bpmnXml = ""
-
-    if (
-      userInput.includes("processo simples") ||
-      userInput.includes("processo básico") ||
-      userInput.includes("crie um processo")
-    ) {
-      response = `Vou criar um processo BPMN simples para você!
-
-Este processo básico inclui:
-- Evento de início
-- Uma tarefa principal
-- Evento de fim
-- Conexões entre os elementos
-
-Perfeito para começar a modelar seus processos de negócio!`
-
-      bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Início" />
-    <bpmn:task id="Task_1" name="Tarefa Principal" />
-    <bpmn:endEvent id="EndEvent_1" name="Fim" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="185" y="122" width="24" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="57" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="432" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="440" y="122" width="20" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="97" />
-        <di:waypoint x="270" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="97" />
-        <di:waypoint x="432" y="97" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
-    } else if (userInput.includes("aprovação") || userInput.includes("aprovacao")) {
-      response = `Vou criar um processo de aprovação para você!
-
-Este processo inclui:
-- Evento de início
-- Tarefa de solicitação
-- Gateway de decisão (Aprovado?)
-- Duas tarefas finais (aprovação/rejeição)
-- Eventos de fim
-
-Ideal para fluxos que precisam de validação e decisão!`
-
-      bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Início" />
-    <bpmn:userTask id="Task_1" name="Fazer Solicitação" />
-    <bpmn:exclusiveGateway id="Gateway_1" name="Aprovado?" />
-    <bpmn:userTask id="Task_2" name="Processar Aprovação" />
-    <bpmn:userTask id="Task_3" name="Processar Rejeição" />
-    <bpmn:endEvent id="EndEvent_1" name="Fim Aprovado" />
-    <bpmn:endEvent id="EndEvent_2" name="Fim Rejeitado" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Gateway_1" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_1" targetRef="Task_2" name="Sim" />
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Gateway_1" targetRef="Task_3" name="Não" />
-    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_2" targetRef="EndEvent_1" />
-    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="EndEvent_2" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="185" y="122" width="24" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1_di" bpmnElement="Gateway_1" isMarkerVisible="true">
-        <dc:Bounds x="425" y="72" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="425" y="52" width="50" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
-        <dc:Bounds x="530" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_3_di" bpmnElement="Task_3">
-        <dc:Bounds x="530" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="692" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="675" y="122" width="70" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_2_di" bpmnElement="EndEvent_2">
-        <dc:Bounds x="692" y="202" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="675" y="245" width="70" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="97" />
-        <di:waypoint x="270" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="97" />
-        <di:waypoint x="425" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
-        <di:waypoint x="475" y="97" />
-        <di:waypoint x="530" y="97" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="495" y="79" width="16" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
-        <di:waypoint x="450" y="122" />
-        <di:waypoint x="450" y="220" />
-        <di:waypoint x="530" y="220" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="456" y="168" width="19" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
-        <di:waypoint x="630" y="97" />
-        <di:waypoint x="692" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
-        <di:waypoint x="630" y="220" />
-        <di:waypoint x="692" y="220" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
-    } else if (userInput.includes("gateway") || userInput.includes("decisão") || userInput.includes("decisao")) {
-      response = `Vou adicionar um gateway de decisão ao processo!
-
-Este processo demonstra:
-- Evento de início
-- Tarefa inicial
-- Gateway exclusivo (decisão)
-- Dois caminhos diferentes
-- Eventos de fim
-
-Perfeito para processos que precisam de ramificação!`
-
-      bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Início" />
-    <bpmn:task id="Task_1" name="Avaliar Situação" />
-    <bpmn:exclusiveGateway id="Gateway_1" name="Condição?" />
-    <bpmn:task id="Task_2" name="Caminho A" />
-    <bpmn:task id="Task_3" name="Caminho B" />
-    <bpmn:endEvent id="EndEvent_1" name="Fim A" />
-    <bpmn:endEvent id="EndEvent_2" name="Fim B" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Gateway_1" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_1" targetRef="Task_2" name="Verdadeiro" />
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Gateway_1" targetRef="Task_3" name="Falso" />
-    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_2" targetRef="EndEvent_1" />
-    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="EndEvent_2" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="185" y="122" width="24" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1_di" bpmnElement="Gateway_1" isMarkerVisible="true">
-        <dc:Bounds x="425" y="72" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="425" y="52" width="50" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
-        <dc:Bounds x="530" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_3_di" bpmnElement="Task_3">
-        <dc:Bounds x="530" y="180" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="692" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="695" y="122" width="30" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_2_di" bpmnElement="EndEvent_2">
-        <dc:Bounds x="692" y="202" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="695" y="245" width="30" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="97" />
-        <di:waypoint x="270" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="97" />
-        <di:waypoint x="425" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
-        <di:waypoint x="475" y="97" />
-        <di:waypoint x="530" y="97" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="475" y="79" width="55" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
-        <di:waypoint x="450" y="122" />
-        <di:waypoint x="450" y="220" />
-        <di:waypoint x="530" y="220" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="465" y="168" width="30" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
-        <di:waypoint x="630" y="97" />
-        <di:waypoint x="692" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
-        <di:waypoint x="630" y="220" />
-        <di:waypoint x="692" y="220" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
-    } else if (userInput.includes("compras") || userInput.includes("compra")) {
-      response = `Vou criar um processo de compras para você!
-
-Este processo inclui:
-- Solicitação de compra
-- Aprovação do gestor
-- Cotação de fornecedores
-- Aprovação final
-- Emissão do pedido
-
-Ideal para controle de aquisições!`
-
-      bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Necessidade de Compra" />
-    <bpmn:userTask id="Task_1" name="Solicitar Compra" />
-    <bpmn:userTask id="Task_2" name="Aprovar Solicitação" />
-    <bpmn:userTask id="Task_3" name="Cotar Fornecedores" />
-    <bpmn:userTask id="Task_4" name="Emitir Pedido" />
-    <bpmn:endEvent id="EndEvent_1" name="Compra Realizada" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Task_2" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_2" targetRef="Task_3" />
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_3" targetRef="Task_4" />
-    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_4" targetRef="EndEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="155" y="122" width="84" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
-        <dc:Bounds x="420" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_3_di" bpmnElement="Task_3">
-        <dc:Bounds x="570" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_4_di" bpmnElement="Task_4">
-        <dc:Bounds x="720" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="872" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="848" y="122" width="84" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="97" />
-        <di:waypoint x="270" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="97" />
-        <di:waypoint x="420" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
-        <di:waypoint x="520" y="97" />
-        <di:waypoint x="570" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
-        <di:waypoint x="670" y="97" />
-        <di:waypoint x="720" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
-        <di:waypoint x="820" y="97" />
-        <di:waypoint x="872" y="97" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
-    } else {
-      response = `Entendi! Vou criar um processo BPMN personalizado baseado na sua solicitação.
-
-Este processo inclui elementos básicos que você pode personalizar:
-- Evento de início
-- Tarefas do usuário
-- Fluxo sequencial
-- Evento de fim
-
-Use o editor bpmn.io para adicionar mais elementos conforme necessário!`
-
-      bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Início do Processo" />
-    <bpmn:userTask id="Task_1" name="Primeira Tarefa" />
-    <bpmn:userTask id="Task_2" name="Segunda Tarefa" />
-    <bpmn:endEvent id="EndEvent_1" name="Fim do Processo" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Task_2" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_2" targetRef="EndEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="155" y="122" width="84" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
-        <dc:Bounds x="420" y="57" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="572" y="79" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="548" y="122" width="84" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="97" />
-        <di:waypoint x="270" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="97" />
-        <di:waypoint x="420" y="97" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
-        <di:waypoint x="520" y="97" />
-        <di:waypoint x="572" y="97" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
+    // Verificar se a API key do DeepSeek está configurada
+    const deepseekApiKey = process.env.DEEPSEEK_API_KEY
+    const deepseekModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat'
+    
+    if (!deepseekApiKey || deepseekApiKey === 'your_deepseek_api_key_here') {
+      console.error("❌ API Chat: API Key do DeepSeek não configurada")
+      return new Response(
+        JSON.stringify({
+          error: "API Key do DeepSeek não configurada",
+          details: "Configure a variável de ambiente DEEPSEEK_API_KEY para usar o chat IA",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      )
     }
 
-    // Simular streaming response
-    const fullResponse = `${response}
+    console.log("🤖 API Chat: Usando DeepSeek AI")
+    console.log(`🎯 Modelo configurado: ${deepseekModel}`)
+    
+    // Preparar o payload da requisição
+    const requestPayload = {
+      model: deepseekModel,
+      messages: [
+        {
+          role: 'system',
+          content: `Você é um especialista em BPMN (Business Process Model and Notation) que ajuda usuários a criar e modificar diagramas de processos de negócio.
 
-<BPMN_START>
-${bpmnXml}
-<BPMN_END>`
+Suas respostas devem:
+1. Ser em português brasileiro
+2. Gerar XML BPMN válido e bem formatado
+3. Usar a estrutura <BPMN_START>XML_AQUI<BPMN_END> para delimitar o XML
+4. SEMPRE incluir o XML BPMN na resposta quando o resultado for um diagrama.
 
-    console.log("✅ API Chat: Resposta gerada com sucesso")
+${currentBpmnXml ? `DIAGRAMA ATUAL:\n${currentBpmnXml}` : 'Nenhum diagrama BPMN foi fornecido. Comece um novo.'}
 
-    // Retornar como stream simulado
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      start(controller) {
-        // Simular chunks de resposta
-        const chunks = fullResponse.match(/.{1,50}/g) || [fullResponse]
-        let index = 0
+INSTRUÇÕES IMPORTANTES:
+- Se o usuário pedir para criar um NOVO diagrama (ex: "crie um processo do zero", "faça um diagrama simples"): IGNORE o diagrama atual (se existir) e gere um XML BPMN completamente novo a partir do pedido.
+- Se o usuário pedir para MODIFICAR o diagrama atual (ex: "adicione uma tarefa", "remova o evento"): use o DIAGRAMA ATUAL como base e aplique as modificações.
+- SEMPRE responda com o XML BPMN completo e válido, não apenas fragmentos.
 
-        const sendChunk = () => {
-          if (index < chunks.length) {
-            const chunk = `data: ${JSON.stringify({ content: chunks[index] })}\n\n`
-            controller.enqueue(encoder.encode(chunk))
-            index++
-            setTimeout(sendChunk, 50) // Simular delay
-          } else {
-            controller.enqueue(encoder.encode("data: [DONE]\n\n"))
-            controller.close()
-          }
-        }
+EXEMPLOS DE RESPOSTAS:
+- "Crie um processo de aprovação" (com diagrama em branco) → XML completo do processo de aprovação.
+- "Adicione uma tarefa de revisão" (com diagrama existente) → XML completo do diagrama existente COM a nova tarefa.
+- "Comece de novo com um processo de compras" (com diagrama existente) → XML completo do processo de compras, ignorando o anterior.
 
-        sendChunk()
-      },
+Lembre-se: demarque o início e o fim do código XML com <BPMN_START> e <BPMN_END>.`
+        },
+        ...messages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,
+    }
+
+    console.log("📤 API Chat: Enviando requisição para DeepSeek:", {
+      model: deepseekModel,
+      messagesCount: requestPayload.messages.length,
+      temperature: requestPayload.temperature,
+      maxTokens: requestPayload.max_tokens
     })
 
-    return new Response(stream, {
+    // Log detalhado do payload para debug
+    console.log("🔍 API Chat: Payload detalhado:", JSON.stringify(requestPayload, null, 2))
+
+    // Usar DeepSeek via API REST
+    const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(requestPayload),
     })
-  } catch (error) {
-    console.error("❌ API Chat: Erro completo:", error)
 
+    console.log("📥 API Chat: Resposta do DeepSeek recebida:", {
+      status: deepseekResponse.status,
+      statusText: deepseekResponse.statusText,
+      ok: deepseekResponse.ok
+    })
+
+    if (!deepseekResponse.ok) {
+      const errorText = await deepseekResponse.text()
+      console.error("❌ API Chat: Erro detalhado do DeepSeek:", {
+        status: deepseekResponse.status,
+        statusText: deepseekResponse.statusText,
+        errorText: errorText.substring(0, 500) // Limitar o tamanho do log
+      })
+      throw new Error(`DeepSeek API error: ${deepseekResponse.status} ${deepseekResponse.statusText} - ${errorText}`)
+    }
+
+    const data = await deepseekResponse.json()
+    const aiResponse = data.choices[0]?.message?.content || ''
+    
+    // Log detalhado da resposta da IA
+    console.log("🤖 API Chat: Resposta completa da IA recebida:")
+    console.log("📄 Conteúdo da resposta:", aiResponse)
+    console.log("📊 Estatísticas da resposta:", {
+      totalLength: aiResponse.length,
+      hasBpmnStart: aiResponse.includes('<BPMN_START>'),
+      hasBpmnEnd: aiResponse.includes('<BPMN_END>'),
+      bpmnStartIndex: aiResponse.indexOf('<BPMN_START>'),
+      bpmnEndIndex: aiResponse.indexOf('<BPMN_END>')
+    })
+    
+    console.log("✅ API Chat: Resposta do DeepSeek processada")
+
+    // Extrair XML BPMN da resposta da IA
+    const xmlMatch = aiResponse.match(/<BPMN_START>([\s\S]*?)<BPMN_END>/)
+    let bpmnXml = ""
+    let response = aiResponse
+
+    if (xmlMatch && xmlMatch[1]) {
+      bpmnXml = xmlMatch[1].trim()
+      response = aiResponse.replace(/<BPMN_START>[\s\S]*?<BPMN_END>/, '').trim()
+      
+      // Log detalhado do XML extraído
+      console.log("✅ API Chat: XML BPMN extraído com sucesso")
+      console.log("📋 XML extraído:", bpmnXml)
+      console.log("📏 Tamanho do XML:", bpmnXml.length)
+      console.log("🔍 Verificações do XML:", {
+        hasXmlDeclaration: bpmnXml.includes('<?xml'),
+        hasBpmnNamespace: bpmnXml.includes('xmlns:bpmn'),
+        hasDefinitions: bpmnXml.includes('<bpmn:definitions'),
+        hasProcess: bpmnXml.includes('<bpmn:process'),
+        hasStartEvent: bpmnXml.includes('<bpmn:startEvent'),
+        hasEndEvent: bpmnXml.includes('<bpmn:endEvent'),
+        hasTask: bpmnXml.includes('<bpmn:task'),
+        hasGateway: bpmnXml.includes('<bpmn:gateway')
+      })
+    } else {
+      // Se não encontrou XML, retornar erro
+      console.log("⚠️ API Chat: XML não encontrado na resposta da IA")
+      console.log("🔍 Tentativa de extração falhou. Conteúdo da resposta:")
+      console.log(aiResponse.substring(0, 1000)) // Primeiros 1000 caracteres
+      response = "Desculpe, não consegui gerar um diagrama BPMN válido. Tente reformular sua solicitação."
+      bpmnXml = ""
+    }
+
+    // Log final antes do retorno
+    console.log("📤 API Chat: Preparando resposta final:", {
+      responseLength: response.length,
+      bpmnXmlLength: bpmnXml.length,
+      hasBpmnXml: !!bpmnXml
+    })
+
+    // Retornar resposta JSON simples (sem stream)
+    return new Response(
+      JSON.stringify({
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: response,
+        bpmnXml: bpmnXml
+      }),
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    )
+
+  } catch (error) {
+    console.error("❌ API Chat: Erro geral:", error)
     return new Response(
       JSON.stringify({
         error: "Erro interno do servidor",
         details: error instanceof Error ? error.message : "Erro desconhecido",
-        timestamp: new Date().toISOString(),
       }),
       {
         status: 500,
@@ -477,10 +210,16 @@ ${bpmnXml}
 
 // Handler para GET (teste)
 export async function GET() {
+  const deepseekApiKey = process.env.DEEPSEEK_API_KEY
+  const deepseekModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat'
+  const hasDeepseekKey = deepseekApiKey && deepseekApiKey !== 'your_deepseek_api_key_here'
+  
   return new Response(
     JSON.stringify({
       status: "API Chat funcionando",
-      mode: "Template-based BPMN Generator",
+      mode: hasDeepseekKey ? "DeepSeek AI" : "API Key não configurada",
+      deepseekConfigured: hasDeepseekKey,
+      model: hasDeepseekKey ? deepseekModel : "N/A",
       timestamp: new Date().toISOString(),
     }),
     {

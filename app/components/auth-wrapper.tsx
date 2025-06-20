@@ -6,27 +6,25 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, hydrated } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (user && pathname === "/") {
-        router.push("/dashboard")
-      } else if (!user && pathname !== "/") {
-        router.push("/")
-      }
+    if (!hydrated) return;
+    if (user && pathname === "/") {
+      router.push("/dashboard")
+    } else if (!user && pathname !== "/") {
+      router.push("/")
     }
-  }, [user, pathname, router])
+  }, [user, pathname, router, hydrated])
 
-  // Don't render anything during SSR to avoid hydration mismatch
-  if (typeof window === "undefined") {
-    return null
+  // Só renderiza quando estiver hidratado
+  if (!hydrated) {
+    return null; // ou um loading, se preferir
   }
-
   if (!user && pathname !== "/") {
-    return null
+    return null;
   }
 
   return <>{children}</>
